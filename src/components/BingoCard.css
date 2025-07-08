@@ -1,0 +1,89 @@
+.bingo-card {
+  display: inline-block;
+  border: 2px solid #333;
+  border-radius: 8px;
+  background: #fafafa;
+  margin: 1rem 0;
+}
+.bingo-row {
+  display: flex;
+}
+.bingo-cell {
+  width: 48px;
+  height: 36px;
+  margin: 1px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  border: 2px solid #666;
+  border-radius: 4px;
+  background: #f9f9f9;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+.bingo-cell.marked {
+  background: #4caf50;
+  color: #fff;
+  border-color: #388e3c;
+  box-shadow: 0 2px 8px rgba(76,175,80,0.15);
+}
+.bingo-cell.free {
+  background: #2196f3;
+  color: #fff;
+  cursor: default;
+  border-color: #1565c0;
+  box-shadow: 0 2px 8px rgba(33,150,243,0.15);
+}
+.bingo-cell.winning {
+  border: 2.5px solid gold;
+  box-shadow: 0 0 8px 2px gold;
+  background: #fffbe6;
+  z-index: 1;
+}
+.bingo-header {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 6px;
+  gap: 6px;
+}
+.bingo-header-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #fff;
+}
+.bingo-header-circle.b { background: #ff6b3d; }
+.bingo-header-circle.i { background: #1bb1a5; }
+.bingo-header-circle.n { background: #fbc02d; color: #333; }
+.bingo-header-circle.g { background: #42a5f5; }
+.bingo-header-circle.o { background: #ab47bc; }
+.bingo-header-cell {
+  width: 48px;
+  height: 24px;
+  margin: 1px;
+  font-size: 1.1rem;
+  line-height: 24px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.player-card-container {
+  background: var(--bingo-card-bg);
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+  padding: 1.2rem 0.5rem 1.2rem 0.5rem;
+  margin: 1.5rem 0 1rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 270px;
+} 
