@@ -5,7 +5,7 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 
 const app = express();
-const PORT = 4000;
+const PORT = process.env.PORT || 4000;
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -265,6 +265,6 @@ app.post('/lobby/reset', (req, res) => {
   res.json({ success: true });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Yegna Bingo backend listening on port ${PORT}`);
 }); 
