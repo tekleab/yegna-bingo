@@ -4,11 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "start": "vite 2>&1 | grep -v QSocketNotifier",
-    "dev": "vite 2>&1 | grep -v QSocketNotifier",
-    "build": "vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "start": "node index.js"
   },
   "dependencies": {
     "react": "^19.1.0",
