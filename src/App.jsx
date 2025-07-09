@@ -423,7 +423,7 @@ export default function App() {
   // Side-by-side game layout with visible header bar
   return (
     <div>
-      <h1 style={{color: 'red'}}>THIS IS VERSION 2</h1>
+      <h1 style={{color: 'green'}}>THIS IS VERSION 3 - Vercel Test 🚀</h1>
       <div className="bingo-app-container">
         <header className="bingo-header-bar">
           <img src={YegnaBingoLogo} alt="Yegna Bingo Logo" className="bingo-logo" />
