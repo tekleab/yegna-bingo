@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import BingoCard from './components/BingoCard'
 import NumberCaller from './components/NumberCaller'
 import './App.css'
-import { getCardNumbers, assignCard, callNextNumber, getBingoWinCells } from './bingoGameLogic';
+import { getCardNumbers, getBingoWinCells } from './bingoGameLogic';
 import YegnaBingoLogo from './assets/YegnaBingoLogo.svg';
 import Lobby from './components/Lobby';
 import CardSelection from './components/CardSelection';
 import axios from 'axios';
 
-const BACKEND_URL = 'https://yegna-bingo.onrender.com';
+const BACKEND_URL = 'https://yegna-bingo-backend.onrender.com';
 
 function RegistrationModal({ onRegister }) {
   const [telegramId, setTelegramId] = useState('');
@@ -198,6 +198,15 @@ export default function App() {
   const [selectedCard, setSelectedCard] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  // Game state
+  const [bingoCard, setBingoCard] = useState(null);
+  const [marked, setMarked] = useState(null);
+  const [calledNumbers, setCalledNumbers] = useState([]);
+  const [winningCells, setWinningCells] = useState([]);
+  const [gameStarted, setGameStarted] = useState(false);
+  const [gameWinner, setGameWinner] = useState(null);
+  const [muted, setMuted] = useState(false);
 
   // Registration handler
   const handleRegister = (userInfo) => {
@@ -252,6 +261,18 @@ export default function App() {
     try {
       await axios.post(`${BACKEND_URL}/lobby/assign_card`, { telegramId: user.telegramId, bet: selectedBet, card: cardNum });
       setSelectedCard(cardNum);
+      
+      // Generate the actual Bingo card
+      const card = getCardNumbers(cardNum);
+      setBingoCard(card);
+      setMarked(Array.from({ length: 5 }, (_, r) =>
+        Array.from({ length: 5 }, (_, c) => r === 2 && c === 2)
+      ));
+      setCalledNumbers([]);
+      setWinningCells([]);
+      setGameStarted(false);
+      setGameWinner(null);
+      
       setStage('game');
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to assign card.');
@@ -275,6 +296,66 @@ export default function App() {
     }
     setLoading(false);
   };
+
+  // Game logic
+  const handleMarkCell = (row, col) => {
+    if (!marked || gameWinner) return;
+    const newMarked = marked.map(row => [...row]);
+    newMarked[row][col] = !newMarked[row][col];
+    setMarked(newMarked);
+    
+    // Check for win
+    const winCells = getBingoWinCells(bingoCard, calledNumbers);
+    if (winCells) {
+      setWinningCells(winCells);
+      setGameWinner(user.telegramId);
+      // Play win sound
+      const audio = new Audio('/win.mp3');
+      audio.play().catch(() => {});
+    }
+  };
+
+  // Poll for game updates
+  useEffect(() => {
+    if (stage !== 'game' || !selectedBet) return;
+    
+    const pollInterval = setInterval(async () => {
+      try {
+        const res = await axios.get(`${BACKEND_URL}/game/status/${selectedBet}`);
+        const { calledNumbers: newCalledNumbers, gameStarted: newGameStarted, winner } = res.data;
+        
+        setCalledNumbers(newCalledNumbers || []);
+        setGameStarted(newGameStarted || false);
+        
+        if (winner && !gameWinner) {
+          setGameWinner(winner);
+          if (winner === user.telegramId) {
+            setWinningCells(getBingoWinCells(bingoCard, newCalledNumbers || []));
+            const audio = new Audio('/win.mp3');
+            audio.play().catch(() => {});
+          }
+        }
+        
+        // Update marked cells based on called numbers
+        if (bingoCard && newCalledNumbers) {
+          const newMarked = marked.map(row => [...row]);
+          for (let r = 0; r < 5; r++) {
+            for (let c = 0; c < 5; c++) {
+              if (r === 2 && c === 2) continue; // FREE space
+              if (newCalledNumbers.includes(bingoCard[r][c])) {
+                newMarked[r][c] = true;
+              }
+            }
+          }
+          setMarked(newMarked);
+        }
+      } catch (err) {
+        console.error('Failed to poll game status:', err);
+      }
+    }, 2000);
+    
+    return () => clearInterval(pollInterval);
+  }, [stage, selectedBet, bingoCard, marked, gameWinner, user.telegramId]);
 
   // UI rendering
   if (!user) {
@@ -305,12 +386,100 @@ export default function App() {
   }
   if (stage === 'game') {
     return (
-      <div>
-        <h1>Game Started!</h1>
-        <div>Your Card: <b>{selectedCard}</b></div>
-        {/* Add BingoCard and game logic here as needed */}
-        <button onClick={handleLeaveLobby} style={{ marginTop: 16, background: '#e53935', color: '#fff', padding: '10px 24px', borderRadius: 6, border: 'none', fontWeight: 700, cursor: 'pointer' }}>Leave Lobby</button>
-        <button onClick={() => setStage('lobby')}>Back to Lobby</button>
+      <div className="bingo-app-container">
+        <div className="bingo-status-bar">
+          {gameWinner ? 
+            (gameWinner === user.telegramId ? '🎉 YOU WON! 🎉' : 'Game Over - Someone Won!') :
+            gameStarted ? '🎮 Game in Progress' : '⏳ Waiting for players...'
+          }
+        </div>
+        
+        <div className="bingo-info-bar">
+          <div className="bingo-info-box">
+            <div className="bingo-info-label">Card</div>
+            <div className="bingo-info-value">#{selectedCard}</div>
+          </div>
+          <div className="bingo-info-box">
+            <div className="bingo-info-label">Bet</div>
+            <div className="bingo-info-value">{selectedBet} Birr</div>
+          </div>
+          <div className="bingo-info-box">
+            <div className="bingo-info-label">Called</div>
+            <div className="bingo-info-value">{calledNumbers.length}/75</div>
+          </div>
+        </div>
+
+        {/* Admin Control Panel - only show for first player or if user is admin */}
+        {(user.telegramId === 'admin' || user.telegramId === '123456789') && (
+          <NumberCaller 
+            bet={selectedBet} 
+            onGameUpdate={(status) => {
+              setCalledNumbers(status.calledNumbers || []);
+              setGameStarted(status.gameStarted || false);
+              setGameWinner(status.winner);
+            }}
+          />
+        )}
+
+        {bingoCard && marked && (
+          <BingoCard
+            card={bingoCard}
+            marked={marked}
+            onMark={handleMarkCell}
+            calledNumbers={calledNumbers}
+            winningCells={winningCells}
+          />
+        )}
+
+        <div className="called-balls-container">
+          <h3>Called Numbers</h3>
+          <div className="called-balls">
+            {calledNumbers.map(num => (
+              <div key={num} className="called-ball">
+                {num}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bingo-btn-row">
+          <button 
+            className="bingo-btn-main"
+            onClick={() => setMuted(!muted)}
+            style={{ background: muted ? '#607d8b' : '#ff6b3d' }}
+          >
+            {muted ? '🔇 Unmute' : '🔊 Mute'}
+          </button>
+          <button 
+            className="bingo-btn-main"
+            onClick={handleLeaveLobby}
+            style={{ background: '#e53935' }}
+          >
+            Leave Game
+          </button>
+        </div>
+
+        {/* Confetti animation for winner */}
+        {gameWinner === user.telegramId && (
+          <div className="confetti">
+            {Array.from({ length: 50 }, (_, i) => (
+              <div
+                key={i}
+                style={{
+                  position: 'absolute',
+                  left: Math.random() * 100 + '%',
+                  top: Math.random() * 100 + '%',
+                  width: '10px',
+                  height: '10px',
+                  background: ['#ff6b3d', '#7ee7e7', '#ffe066', '#a66bff', '#4caf50'][Math.floor(Math.random() * 5)],
+                  borderRadius: '50%',
+                  animation: `fall ${Math.random() * 3 + 2}s linear infinite`,
+                  zIndex: 10000
+                }}
+              />
+            ))}
+          </div>
+        )}
       </div>
     );
   }
