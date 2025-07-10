@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import BingoCard from './components/BingoCard'
 import NumberCaller from './components/NumberCaller'
 import './App.css'
