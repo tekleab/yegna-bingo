@@ -4,7 +4,7 @@ const axios = require('axios');
 // Updated bot token
 const BOT_TOKEN = '8019641171:AAGs1hQJybtuEHpUjaE47Tp5DYYGksDF6Sg';
 
-const BACKEND_URL = 'http://localhost:4000';
+const BACKEND_URL = 'https://yegna-bingo.onrender.com';
 
 if (!BOT_TOKEN || BOT_TOKEN === 'YOUR_TELEGRAM_BOT_TOKEN_HERE') {
   console.error('Please set your Telegram bot token in bot.js');
