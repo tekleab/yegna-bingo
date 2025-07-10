@@ -140,6 +140,118 @@ app.post('/lobby/leave', async (req, res) => {
   }
 });
 
+// Start game (admin function - can be triggered when enough players join)
+app.post('/game/start/:bet', async (req, res) => {
+  const { bet } = req.params;
+  try {
+    const lobby = await Lobby.findOne({ bet, started: false });
+    if (!lobby) return res.status(404).json({ error: 'Lobby not found' });
+    if (lobby.players.length < 2) return res.status(400).json({ error: 'Need at least 2 players' });
+    
+    lobby.started = true;
+    lobby.calledNumbers = [];
+    lobby.winner = null;
+    await lobby.save();
+    
+    res.json({ message: 'Game started', lobby });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to start game' });
+  }
+});
+
+// Get game status
+app.get('/game/status/:bet', async (req, res) => {
+  const { bet } = req.params;
+  try {
+    const lobby = await Lobby.findOne({ bet });
+    if (!lobby) return res.status(404).json({ error: 'Game not found' });
+    
+    res.json({
+      gameStarted: lobby.started,
+      calledNumbers: lobby.calledNumbers || [],
+      winner: lobby.winner,
+      players: lobby.players.length,
+      assignedCards: Object.fromEntries(lobby.assignedCards)
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to get game status' });
+  }
+});
+
+// Call next number (admin function)
+app.post('/game/call/:bet', async (req, res) => {
+  const { bet } = req.params;
+  try {
+    const lobby = await Lobby.findOne({ bet, started: true });
+    if (!lobby) return res.status(404).json({ error: 'Game not found or not started' });
+    
+    // Generate next number
+    const allNumbers = Array.from({ length: 75 }, (_, i) => i + 1);
+    const remaining = allNumbers.filter(n => !lobby.calledNumbers.includes(n));
+    if (remaining.length === 0) return res.status(400).json({ error: 'All numbers called' });
+    
+    const nextNumber = remaining[Math.floor(Math.random() * remaining.length)];
+    lobby.calledNumbers.push(nextNumber);
+    
+    // Check for winners
+    const winner = await checkForWinner(lobby);
+    if (winner) {
+      lobby.winner = winner;
+      // Update winner's balance
+      const user = await User.findOne({ telegramId: winner });
+      if (user) {
+        const winnings = lobby.bet * lobby.players.length * 0.8;
+        user.balance += winnings;
+        await user.save();
+      }
+    }
+    
+    await lobby.save();
+    res.json({ 
+      calledNumber: nextNumber, 
+      calledNumbers: lobby.calledNumbers,
+      winner: lobby.winner 
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to call number' });
+  }
+});
+
+// Helper function to check for winner
+async function checkForWinner(lobby) {
+  const { getCardNumbers, getBingoWinCells } = require('./bingoGameLogic');
+  
+  for (const [telegramId, cardId] of lobby.assignedCards) {
+    const card = getCardNumbers(cardId);
+    const winCells = getBingoWinCells(card, lobby.calledNumbers);
+    if (winCells) {
+      return telegramId;
+    }
+  }
+  return null;
+}
+
+// Auto-start games when enough players join (optional)
+app.post('/lobby/auto-start/:bet', async (req, res) => {
+  const { bet } = req.params;
+  try {
+    const lobby = await Lobby.findOne({ bet, started: false });
+    if (!lobby) return res.status(404).json({ error: 'Lobby not found' });
+    
+    if (lobby.players.length >= 2) {
+      lobby.started = true;
+      lobby.calledNumbers = [];
+      lobby.winner = null;
+      await lobby.save();
+      res.json({ message: 'Game auto-started', lobby });
+    } else {
+      res.json({ message: 'Not enough players yet', players: lobby.players.length });
+    }
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to auto-start game' });
+  }
+});
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Yegna Bingo backend listening on port ${PORT}`);
 });
