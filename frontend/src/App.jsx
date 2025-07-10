@@ -259,6 +259,23 @@ export default function App() {
     setLoading(false);
   };
 
+  // Leave lobby logic
+  const handleLeaveLobby = async () => {
+    if (!user || !selectedBet) return;
+    setLoading(true);
+    setError('');
+    try {
+      await axios.post(`${BACKEND_URL}/lobby/leave`, { telegramId: user.telegramId, bet: selectedBet });
+      setSelectedBet(null);
+      setTakenCards([]);
+      setSelectedCard(null);
+      setStage('lobby');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to leave lobby.');
+    }
+    setLoading(false);
+  };
+
   // UI rendering
   if (!user) {
     return <RegistrationModal onRegister={handleRegister} />;
@@ -282,6 +299,7 @@ export default function App() {
         <h1>Select Your Card</h1>
         {error && <div style={{ color: 'red', marginBottom: 10 }}>{error}</div>}
         <CardSelection takenCards={takenCards} onPlay={handleAssignCard} />
+        <button onClick={handleLeaveLobby} style={{ marginTop: 16, background: '#e53935', color: '#fff', padding: '10px 24px', borderRadius: 6, border: 'none', fontWeight: 700, cursor: 'pointer' }}>Leave Lobby</button>
       </div>
     );
   }
@@ -291,6 +309,7 @@ export default function App() {
         <h1>Game Started!</h1>
         <div>Your Card: <b>{selectedCard}</b></div>
         {/* Add BingoCard and game logic here as needed */}
+        <button onClick={handleLeaveLobby} style={{ marginTop: 16, background: '#e53935', color: '#fff', padding: '10px 24px', borderRadius: 6, border: 'none', fontWeight: 700, cursor: 'pointer' }}>Leave Lobby</button>
         <button onClick={() => setStage('lobby')}>Back to Lobby</button>
       </div>
     );
