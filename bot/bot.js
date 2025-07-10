@@ -187,7 +187,7 @@ bot.hears('Leave Lobby', async (ctx) => {
 bot.command('launch', (ctx) => {
   ctx.reply('Tap below to launch the Bingo game UI:',
     Markup.keyboard([
-      [Markup.button.webApp('Launch Game', 'https://yegna-bingo-211afbyhe-tekleabs-projects-77b5f34a.vercel.app')]
+      [Markup.button.webApp('Launch Game', 'https://yegna-bingo-7fp5.vercel.app')]
     ]).resize()
   );
 });
