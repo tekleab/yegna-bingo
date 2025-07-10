@@ -9,6 +9,9 @@
   "author": "",
   "license": "ISC",
   "description": "This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.",
+  "engines": {
+    "node": "20.x"
+  },
   "dependencies": {
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
