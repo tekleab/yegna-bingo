@@ -12,30 +12,36 @@ const allowedOrigins = [
   'https://yegna-bingo-7fp5.vercel.app',
   'https://yegna-bingo.vercel.app',
   'http://localhost:5173',
+  'http://localhost:3000',
 ];
 
+function corsOrigin(origin, callback) {
+  if (!origin) return callback(null, true);
+  if (allowedOrigins.includes(origin)) {
+    return callback(null, true);
+  }
+  console.error('Blocked by CORS:', origin);
+  return callback(new Error('Not allowed by CORS: ' + origin), false);
+}
+
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    return callback(new Error('Not allowed by CORS'), false);
-  },
+  origin: corsOrigin,
   credentials: true,
 }));
 
 // Handle preflight requests for all routes
 app.options('*', cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    return callback(new Error('Not allowed by CORS'), false);
-  },
+  origin: corsOrigin,
   credentials: true,
 }));
+
+// CORS error handler
+app.use(function(err, req, res, next) {
+  if (err.message && err.message.startsWith('Not allowed by CORS')) {
+    return res.status(403).json({ error: err.message });
+  }
+  next(err);
+});
 app.use(bodyParser.json());
 
 // Connect to MongoDB
