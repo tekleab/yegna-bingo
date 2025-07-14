@@ -10,9 +10,7 @@ const PORT = process.env.PORT || 4000;
 
 const allowedOrigins = [
   'https://yegna-bingo-7fp5.vercel.app',
-  'https://yegna-bingo.vercel.app',
   'http://localhost:5173',
-  'http://localhost:3000',
 ];
 
 function corsOrigin(origin, callback) {
@@ -24,12 +22,13 @@ function corsOrigin(origin, callback) {
   return callback(new Error('Not allowed by CORS: ' + origin), false);
 }
 
+// CORS middleware (must be before bodyParser and routes)
 app.use(cors({
   origin: corsOrigin,
   credentials: true,
 }));
 
-// Handle preflight requests for all routes
+// Preflight handler for all routes
 app.options('*', cors({
   origin: corsOrigin,
   credentials: true,
@@ -42,6 +41,7 @@ app.use(function(err, req, res, next) {
   }
   next(err);
 });
+
 app.use(bodyParser.json());
 
 // Connect to MongoDB
