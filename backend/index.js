@@ -49,6 +49,49 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('Connected to MongoDB'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
+// === AUTO-CALLING LOGIC ===
+const autoCallTimers = {};
+const AUTO_CALL_INTERVAL = 5000; // 5 seconds
+
+async function startAutoCalling(bet) {
+  if (autoCallTimers[bet]) return; // Already running
+  autoCallTimers[bet] = setInterval(async () => {
+    const lobby = await Lobby.findOne({ bet, started: true });
+    if (!lobby || lobby.winner || (lobby.calledNumbers && lobby.calledNumbers.length >= 75)) {
+      clearInterval(autoCallTimers[bet]);
+      delete autoCallTimers[bet];
+      return;
+    }
+    // Call next number
+    const allNumbers = Array.from({ length: 75 }, (_, i) => i + 1);
+    const remaining = allNumbers.filter(n => !lobby.calledNumbers.includes(n));
+    if (remaining.length === 0) {
+      clearInterval(autoCallTimers[bet]);
+      delete autoCallTimers[bet];
+      return;
+    }
+    const nextNumber = remaining[Math.floor(Math.random() * remaining.length)];
+    lobby.calledNumbers.push(nextNumber);
+    // Check for winners
+    const winner = await checkForWinner(lobby);
+    if (winner) {
+      lobby.winner = winner;
+      // Update winner's balance
+      const user = await User.findOne({ telegramId: winner });
+      if (user) {
+        const winnings = lobby.bet * lobby.players.length * 0.8;
+        user.balance += winnings;
+        await user.save();
+      }
+    }
+    await lobby.save();
+    if (lobby.winner) {
+      clearInterval(autoCallTimers[bet]);
+      delete autoCallTimers[bet];
+    }
+  }, AUTO_CALL_INTERVAL);
+}
+
 // Example endpoint
 app.get('/', (req, res) => {
   res.send('Yegna Bingo backend is running!');
@@ -161,6 +204,7 @@ app.post('/lobby/assign_card', async (req, res) => {
       lobby.calledNumbers = [];
       lobby.winner = null;
       await lobby.save();
+      startAutoCalling(bet);
     }
 
     res.json({ message: 'Card assigned', card });
@@ -197,6 +241,7 @@ app.post('/game/start/:bet', async (req, res) => {
     lobby.calledNumbers = [];
     lobby.winner = null;
     await lobby.save();
+    startAutoCalling(bet);
     
     res.json({ message: 'Game started', lobby });
   } catch (err) {
