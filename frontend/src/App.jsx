@@ -219,7 +219,7 @@ export default function App() {
     if (!user) return;
     setLoading(true);
     setError('');
-    axios.get(`${BACKEND_URL}/wallet/${user.telegramId}`)
+    axios.get(`${BACKEND_URL}/wallet/${user?.telegramId}`)
       .then(res => setWallet(res.data.balance))
       .catch(() => setWallet(null));
     // Fetch all lobbies
@@ -241,7 +241,7 @@ export default function App() {
     setLoading(true);
     setError('');
     try {
-      await axios.post(`${BACKEND_URL}/lobby/join`, { telegramId: user.telegramId, bet });
+      await axios.post(`${BACKEND_URL}/lobby/join`, { telegramId: user?.telegramId, bet });
       // Fetch taken cards
       const res = await axios.get(`${BACKEND_URL}/lobby/cards/${bet}`);
       setTakenCards(Array.from({ length: 100 }, (_, i) => i + 1).filter(num => !res.data.available.includes(num)));
@@ -254,7 +254,7 @@ export default function App() {
           const lobbyRes = await axios.get(`${BACKEND_URL}/lobby/status/${bet}`);
           setSelectedBet(bet);
           // Check if user has an assigned card
-          const assignedCard = lobbyRes.data.lobby?.assignedCards?.[user.telegramId];
+          const assignedCard = lobbyRes.data.lobby?.assignedCards?.[user?.telegramId];
           if (assignedCard) {
             setSelectedCard(assignedCard);
             // Generate the actual Bingo card
@@ -286,7 +286,7 @@ export default function App() {
     setLoading(true);
     setError('');
     try {
-      await axios.post(`${BACKEND_URL}/lobby/assign_card`, { telegramId: user.telegramId, bet: selectedBet, card: cardNum });
+      await axios.post(`${BACKEND_URL}/lobby/assign_card`, { telegramId: user?.telegramId, bet: selectedBet, card: cardNum });
       setSelectedCard(cardNum);
       
       // Generate the actual Bingo card
@@ -313,7 +313,7 @@ export default function App() {
     setLoading(true);
     setError('');
     try {
-      await axios.post(`${BACKEND_URL}/lobby/leave`, { telegramId: user.telegramId, bet: selectedBet });
+      await axios.post(`${BACKEND_URL}/lobby/leave`, { telegramId: user?.telegramId, bet: selectedBet });
       setSelectedBet(null);
       setTakenCards([]);
       setSelectedCard(null);
@@ -335,7 +335,7 @@ export default function App() {
     const winCells = getBingoWinCells(bingoCard, calledNumbers);
     if (winCells) {
       setWinningCells(winCells);
-      setGameWinner(user.telegramId);
+      if (user) setGameWinner(user.telegramId);
       // Play win sound
       const audio = new Audio('/win.mp3');
       audio.play().catch(() => {});
@@ -344,7 +344,7 @@ export default function App() {
 
   // Poll for game updates
   useEffect(() => {
-    if (stage !== 'game' || !selectedBet) return;
+    if (stage !== 'game' || !selectedBet || !user) return;
     
     const pollInterval = setInterval(async () => {
       try {
@@ -356,7 +356,7 @@ export default function App() {
         
         if (winner && !gameWinner) {
           setGameWinner(winner);
-          if (winner === user.telegramId) {
+          if (user && winner === user.telegramId) {
             setWinningCells(getBingoWinCells(bingoCard, newCalledNumbers || []));
             const audio = new Audio('/win.mp3');
             audio.play().catch(() => {});
@@ -382,7 +382,7 @@ export default function App() {
     }, 2000);
     
     return () => clearInterval(pollInterval);
-  }, [stage, selectedBet, bingoCard, marked, gameWinner, user.telegramId]);
+  }, [stage, selectedBet, bingoCard, marked, gameWinner, user]);
 
   // UI rendering
   if (!user) {
@@ -437,7 +437,7 @@ export default function App() {
         </div>
 
         {/* Admin Control Panel - only show for first player or if user is admin */}
-        {(user.telegramId === 'admin' || user.telegramId === '123456789') && (
+        {(user && (user.telegramId === 'admin' || user.telegramId === '123456789')) && (
           <NumberCaller 
             bet={selectedBet} 
             onGameUpdate={(status) => {
@@ -487,7 +487,7 @@ export default function App() {
         </div>
 
         {/* Confetti animation for winner */}
-        {gameWinner === user.telegramId && (
+        {user && gameWinner === user.telegramId && (
           <div className="confetti">
             {Array.from({ length: 50 }, (_, i) => (
               <div
