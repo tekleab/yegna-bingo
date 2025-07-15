@@ -15,6 +15,13 @@ function RegistrationModal({ onRegister }) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
+  const [showLogin, setShowLogin] = useState(false);
+  const savedUser = localStorage.getItem('yegnaUser');
+  const parsedUser = savedUser ? JSON.parse(savedUser) : null;
+
+  useEffect(() => {
+    if (parsedUser) setShowLogin(true);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,6 +36,25 @@ function RegistrationModal({ onRegister }) {
       setError(err.response?.data?.error || 'Registration failed.');
     }
   };
+
+  const handleLogin = () => {
+    if (parsedUser) {
+      onRegister(parsedUser);
+    }
+  };
+
+  if (showLogin && parsedUser) {
+    return (
+      <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: '#000a', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+        <div style={{ background: '#fff', padding: 32, borderRadius: 12, boxShadow: '0 4px 24px #0004', minWidth: 320, textAlign: 'center' }}>
+          <h2 style={{ marginBottom: 18 }}>Welcome back, {parsedUser.name}!</h2>
+          <div style={{ marginBottom: 16, color: '#1976d2', fontWeight: 500 }}>You are already registered.</div>
+          <button onClick={handleLogin} style={{ width: '100%', padding: 10, borderRadius: 6, background: '#43a047', color: '#fff', fontWeight: 700, fontSize: 16, border: 'none', cursor: 'pointer', marginBottom: 8 }}>Login</button>
+          <button onClick={() => { localStorage.removeItem('yegnaUser'); window.location.reload(); }} style={{ width: '100%', padding: 10, borderRadius: 6, background: '#e53935', color: '#fff', fontWeight: 700, fontSize: 16, border: 'none', cursor: 'pointer' }}>Register as Different User</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: '#000a', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
