@@ -302,16 +302,16 @@ export default function App() {
         {/* Add BingoCard and game logic here as needed */}
         <button onClick={() => setStage('lobby')}>Back to Lobby</button>
         {/* Admin Control Panel - only show for first player or if user is admin */}
-        {/* {(user && (user.telegramId === 'admin' || user.telegramId === '123456789')) && (
+        {(user && (user.telegramId === 'admin' || user.telegramId === '123456789')) && (
           <NumberCaller 
             bet={selectedBet} 
             onGameUpdate={(status) => {
-              setCalledNumbers(status.calledNumbers || []);
-              setGameStarted(status.gameStarted || false);
-              setGameWinner(status.winner);
+              // setCalledNumbers(status.calledNumbers || []);
+              // setGameStarted(status.gameStarted || false);
+              // setGameWinner(status.winner);
             }}
           />
-        )} */}
+        )}
         {/* Confetti animation for winner */}
         {user && (
           <div className="confetti">
