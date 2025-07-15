@@ -210,7 +210,7 @@ export default function App() {
     if (!user) return;
     setLoading(true);
     setError('');
-    axios.get(`${BACKEND_URL}/wallet/${user.telegramId}`)
+    axios.get(`${BACKEND_URL}/wallet/${user?.telegramId}`)
       .then(res => setWallet(res.data.balance))
       .catch(() => setWallet(null));
     // Fetch all lobbies
@@ -232,7 +232,7 @@ export default function App() {
     setLoading(true);
     setError('');
     try {
-      await axios.post(`${BACKEND_URL}/lobby/join`, { telegramId: user.telegramId, bet });
+      await axios.post(`${BACKEND_URL}/lobby/join`, { telegramId: user?.telegramId, bet });
       // Fetch taken cards
       const res = await axios.get(`${BACKEND_URL}/lobby/cards/${bet}`);
       setTakenCards(Array.from({ length: 100 }, (_, i) => i + 1).filter(num => !res.data.available.includes(num)));
@@ -250,7 +250,7 @@ export default function App() {
     setLoading(true);
     setError('');
     try {
-      await axios.post(`${BACKEND_URL}/lobby/assign_card`, { telegramId: user.telegramId, bet: selectedBet, card: cardNum });
+      await axios.post(`${BACKEND_URL}/lobby/assign_card`, { telegramId: user?.telegramId, bet: selectedBet, card: cardNum });
       setSelectedCard(cardNum);
       setStage('game');
     } catch (err) {
@@ -282,16 +282,57 @@ export default function App() {
         <h1>Select Your Card</h1>
         {error && <div style={{ color: 'red', marginBottom: 10 }}>{error}</div>}
         <CardSelection takenCards={takenCards} onPlay={handleAssignCard} />
+        <button onClick={() => setStage('lobby')} style={{ marginTop: 16, background: '#e53935', color: '#fff', padding: '10px 24px', borderRadius: 6, border: 'none', fontWeight: 700, cursor: 'pointer' }}>Leave Lobby</button>
       </div>
     );
   }
   if (stage === 'game') {
     return (
-      <div>
-        <h1>Game Started!</h1>
-        <div>Your Card: <b>{selectedCard}</b></div>
+      <div className="bingo-app-container">
+        <div className="bingo-status-bar">
+          {/* gameWinner, gameStarted, calledNumbers, setCalledNumbers, setGameStarted, setGameWinner are not defined in this component */}
+          {/* Assuming these are managed by a parent or passed as props */}
+          {/* For now, just a placeholder */}
+          {/* {gameWinner ? 
+            (user && gameWinner === user.telegramId ? '🎉 YOU WON! 🎉' : 'Game Over - Someone Won!') :
+            gameStarted ? '🎮 Game in Progress' : '⏳ Waiting for players...'
+          } */}
+          <span>⏳ Waiting for players...</span>
+        </div>
         {/* Add BingoCard and game logic here as needed */}
         <button onClick={() => setStage('lobby')}>Back to Lobby</button>
+        {/* Admin Control Panel - only show for first player or if user is admin */}
+        {/* {(user && (user.telegramId === 'admin' || user.telegramId === '123456789')) && (
+          <NumberCaller 
+            bet={selectedBet} 
+            onGameUpdate={(status) => {
+              setCalledNumbers(status.calledNumbers || []);
+              setGameStarted(status.gameStarted || false);
+              setGameWinner(status.winner);
+            }}
+          />
+        )} */}
+        {/* Confetti animation for winner */}
+        {user && (
+          <div className="confetti">
+            {Array.from({ length: 50 }, (_, i) => (
+              <div
+                key={i}
+                style={{
+                  position: 'absolute',
+                  left: Math.random() * 100 + '%',
+                  top: Math.random() * 100 + '%',
+                  width: '10px',
+                  height: '10px',
+                  background: ['#ff6b3d', '#7ee7e7', '#ffe066', '#a66bff', '#4caf50'][Math.floor(Math.random() * 5)],
+                  borderRadius: '50%',
+                  animation: `fall ${Math.random() * 3 + 2}s linear infinite`,
+                  zIndex: 10000
+                }}
+              />
+            ))}
+          </div>
+        )}
       </div>
     );
   }
