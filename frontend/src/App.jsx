@@ -207,6 +207,8 @@ export default function App() {
   const [gameStarted, setGameStarted] = useState(false);
   const [gameWinner, setGameWinner] = useState(null);
   const [muted, setMuted] = useState(false);
+  // Add state for bingo claim error
+  const [bingoError, setBingoError] = useState('');
 
   // Registration handler
   const handleRegister = (userInfo) => {
@@ -484,8 +486,27 @@ export default function App() {
           >
             Leave Game
           </button>
+          <button
+            className="bingo-btn-main"
+            style={{ background: '#43a047' }}
+            onClick={() => {
+              setBingoError('');
+              if (!bingoCard || !calledNumbers) return;
+              const winCells = getBingoWinCells(bingoCard, calledNumbers);
+              if (winCells) {
+                setWinningCells(winCells);
+                setGameWinner(user.telegramId);
+              } else {
+                setBingoError('No Bingo yet! Keep playing.');
+              }
+            }}
+          >
+            Bingo!
+          </button>
         </div>
-
+        {bingoError && (
+          <div style={{ color: '#e53935', fontWeight: 700, marginTop: 8 }}>{bingoError}</div>
+        )}
         {/* Confetti animation for winner */}
         {user && gameWinner === user.telegramId && (
           <div className="confetti">
