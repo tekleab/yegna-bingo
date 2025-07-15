@@ -248,7 +248,34 @@ export default function App() {
       setSelectedBet(bet);
       setStage('card');
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to join lobby.');
+      if (err.response?.data?.error === 'Already in lobby') {
+        // Fetch lobby status to determine if user has a card
+        try {
+          const lobbyRes = await axios.get(`${BACKEND_URL}/lobby/status/${bet}`);
+          setSelectedBet(bet);
+          // Check if user has an assigned card
+          const assignedCard = lobbyRes.data.lobby?.assignedCards?.[user.telegramId];
+          if (assignedCard) {
+            setSelectedCard(assignedCard);
+            // Generate the actual Bingo card
+            const card = getCardNumbers(assignedCard);
+            setBingoCard(card);
+            setMarked(Array.from({ length: 5 }, (_, r) =>
+              Array.from({ length: 5 }, (_, c) => r === 2 && c === 2)
+            ));
+            setStage('game');
+          } else {
+            // Fetch taken cards for card selection
+            const res = await axios.get(`${BACKEND_URL}/lobby/cards/${bet}`);
+            setTakenCards(Array.from({ length: 100 }, (_, i) => i + 1).filter(num => !res.data.available.includes(num)));
+            setStage('card');
+          }
+        } catch (fetchErr) {
+          setError('Failed to fetch lobby status.');
+        }
+      } else {
+        setError(err.response?.data?.error || 'Failed to join lobby.');
+      }
     }
     setLoading(false);
   };
