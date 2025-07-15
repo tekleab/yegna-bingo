@@ -151,6 +151,18 @@ app.post('/lobby/assign_card', async (req, res) => {
     }
     lobby.assignedCards.set(telegramId, card);
     await lobby.save();
+
+    // AUTO-START LOGIC: If all players have assigned cards and at least 2 players, start the game
+    if (
+      lobby.players.length >= 2 &&
+      lobby.players.every(pid => lobby.assignedCards.has(pid))
+    ) {
+      lobby.started = true;
+      lobby.calledNumbers = [];
+      lobby.winner = null;
+      await lobby.save();
+    }
+
     res.json({ message: 'Card assigned', card });
   } catch (err) {
     res.status(500).json({ error: 'Failed to assign card' });
