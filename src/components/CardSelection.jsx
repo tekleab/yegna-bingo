@@ -4,62 +4,34 @@ export default function CardSelection({ takenCards, onPlay }) {
   const [selected, setSelected] = useState(null);
 
   return (
-    <div style={{ padding: 32, textAlign: 'center' }}>
-      <h2 style={{ marginBottom: 20, fontSize: 24, fontWeight: 700 }}>Select Your Card</h2>
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(10, 1fr)',
-        gap: 10,
-        justifyContent: 'center',
-        margin: '0 auto',
-        maxWidth: 600
-      }}>
+    <div className="card-selection-mobile" style={{ width: '100%', maxWidth: 340, margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+      <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 8 }}>Pick a Card</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', width: '100%' }}>
         {Array.from({ length: 100 }, (_, i) => i + 1).map(num => (
           <button
             key={num}
-            disabled={takenCards.includes(num)}
+            className="card-select-btn"
             style={{
-              padding: '14px 0',
-              borderRadius: 8,
-              border: selected === num ? '3px solid #ff9800' : '2px solid #2196f3',
-              background: takenCards.includes(num)
-                ? '#bdbdbd'
-                : selected === num
-                ? '#ffe082'
-                : '#2196f3',
-              color: takenCards.includes(num) ? '#fff' : selected === num ? '#e65100' : '#fff',
-              fontWeight: 700,
-              fontSize: 18,
+              width: 44,
+              height: 44,
+              borderRadius: 10,
+              background: takenCards.includes(num) ? '#eee' : '#43a047',
+              color: takenCards.includes(num) ? '#aaa' : '#fff',
+              fontWeight: 800,
+              fontSize: 15,
+              border: takenCards.includes(num) ? '2px solid #ccc' : '2px solid #43a047',
+              margin: 2,
               cursor: takenCards.includes(num) ? 'not-allowed' : 'pointer',
-              minWidth: 44,
-              boxShadow: selected === num ? '0 0 10px #ff9800' : '0 1px 4px rgba(0,0,0,0.08)',
-              transition: 'all 0.15s',
+              boxShadow: takenCards.includes(num) ? 'none' : '0 1px 4px #0002',
+              transition: 'background 0.18s, color 0.18s',
             }}
-            onClick={() => setSelected(num)}
+            disabled={takenCards.includes(num)}
+            onClick={() => onPlay(num)}
           >
             {num}
           </button>
         ))}
       </div>
-      <button
-        style={{
-          marginTop: 28,
-          padding: '14px 40px',
-          borderRadius: 10,
-          border: 'none',
-          background: selected ? '#43a047' : '#bdbdbd',
-          color: '#fff',
-          fontWeight: 700,
-          fontSize: 20,
-          cursor: selected ? 'pointer' : 'not-allowed',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
-          transition: 'background 0.15s',
-        }}
-        disabled={!selected}
-        onClick={() => selected && onPlay(selected)}
-      >
-        Play
-      </button>
     </div>
   );
 } 

@@ -288,50 +288,86 @@ export default function App() {
   }
   if (stage === 'game') {
     return (
-      <div className="bingo-app-container">
-        <div className="bingo-status-bar">
-          {/* gameWinner, gameStarted, calledNumbers, setCalledNumbers, setGameStarted, setGameWinner are not defined in this component */}
-          {/* Assuming these are managed by a parent or passed as props */}
-          {/* For now, just a placeholder */}
-          {/* {gameWinner ? 
-            (user && gameWinner === user.telegramId ? '🎉 YOU WON! 🎉' : 'Game Over - Someone Won!') :
-            gameStarted ? '🎮 Game in Progress' : '⏳ Waiting for players...'
-          } */}
-          <span>⏳ Waiting for players...</span>
+      <div className="bingo-app-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#18222b', position: 'relative', paddingBottom: 80 }}>
+        {/* Header */}
+        <div className="bingo-header-bar" style={{ width: '100%', maxWidth: 420, margin: '0 auto', padding: '0.7rem 0.5rem 0 0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <img src={YegnaBingoLogo} alt="Yegna Bingo" style={{ height: 36, marginRight: 8 }} />
+          <div className="bingo-title" style={{ fontWeight: 900, fontSize: 18, color: '#fff' }}>Yegna Bingo</div>
+          <div style={{ fontSize: 14, color: '#ffe066', fontWeight: 700 }}>{calledNumbers.length}/75</div>
         </div>
-        {/* Add BingoCard and game logic here as needed */}
-        <button onClick={() => setStage('lobby')}>Back to Lobby</button>
-        {/* Admin Control Panel - only show for first player or if user is admin */}
-        {(user && (user.telegramId === 'admin' || user.telegramId === '123456789')) && (
-          <NumberCaller 
-            bet={selectedBet} 
-            onGameUpdate={(status) => {
-              // setCalledNumbers(status.calledNumbers || []);
-              // setGameStarted(status.gameStarted || false);
-              // setGameWinner(status.winner);
-            }}
-          />
-        )}
-        {/* Confetti animation for winner */}
-        {user && (
-          <div className="confetti">
-            {Array.from({ length: 50 }, (_, i) => (
-              <div
-                key={i}
-                style={{
-                  position: 'absolute',
-                  left: Math.random() * 100 + '%',
-                  top: Math.random() * 100 + '%',
-                  width: '10px',
-                  height: '10px',
-                  background: ['#ff6b3d', '#7ee7e7', '#ffe066', '#a66bff', '#4caf50'][Math.floor(Math.random() * 5)],
-                  borderRadius: '50%',
-                  animation: `fall ${Math.random() * 3 + 2}s linear infinite`,
-                  zIndex: 10000
-                }}
-              />
+
+        {/* Status Bar */}
+        <div className="bingo-status-bar" style={{ width: '100%', maxWidth: 420, margin: '0 auto', marginTop: 6, marginBottom: 6, fontWeight: 700, fontSize: 16, color: '#fff', textAlign: 'center' }}>
+          {gameWinner ?
+            (gameWinner === user.telegramId ? '🎉 YOU WON! 🎉' : 'Game Over - Someone Won!') :
+            gameStarted ? '🎮 Game in Progress' : '⏳ Waiting for players...'}
+        </div>
+
+        {/* Info Bar */}
+        <div className="bingo-info-bar" style={{ display: 'flex', justifyContent: 'center', gap: 12, marginBottom: 8 }}>
+          <div className="bingo-info-box" style={{ background: '#232c3a', color: '#fff', borderRadius: 8, padding: '4px 10px', fontSize: 13, fontWeight: 700 }}>Card #{selectedCard}</div>
+          <div className="bingo-info-box" style={{ background: '#232c3a', color: '#fff', borderRadius: 8, padding: '4px 10px', fontSize: 13, fontWeight: 700 }}>{selectedBet} Birr</div>
+        </div>
+
+        {/* Called Numbers - horizontally scrollable */}
+        <div className="called-balls-container" style={{ width: '100%', maxWidth: 420, margin: '0 auto', marginBottom: 8 }}>
+          <div style={{ fontSize: 13, color: '#7ee7e7', fontWeight: 700, marginBottom: 2 }}>Called Numbers</div>
+          <div className="called-balls" style={{ display: 'flex', overflowX: 'auto', gap: 6, padding: '4px 0', scrollbarWidth: 'none' }}>
+            {calledNumbers.map(num => (
+              <div key={num} className="called-ball" style={{ minWidth: 32, height: 32, borderRadius: 16, background: '#ffe066', color: '#b07d00', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 15, border: '2px solid #fff', boxShadow: '0 1px 4px #0002' }}>{num}</div>
             ))}
           </div>
+        </div>
+
+        {/* Bingo Card */}
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', maxWidth: 420, margin: '0 auto' }}>
+          {bingoCard && marked && (
+            <BingoCard
+              card={bingoCard}
+              marked={marked}
+              onMark={handleMarkCell}
+              calledNumbers={calledNumbers}
+              winningCells={winningCells}
+            />
+          )}
+        </div>
+
+        {/* Button Row - fixed at bottom */}
+        <div className="bingo-btn-row" style={{ position: 'fixed', left: 0, bottom: 0, width: '100vw', maxWidth: 420, margin: '0 auto', background: '#18222b', zIndex: 100, display: 'flex', justifyContent: 'center', gap: 10, padding: '12px 0', borderTop: '1.5px solid #232c3a' }}>
+          <button
+            className="bingo-btn-main"
+            onClick={() => setMuted(!muted)}
+            style={{ background: muted ? '#607d8b' : '#ff6b3d', minWidth: 80 }}
+          >
+            {muted ? '🔇 Unmute' : '🔊 Mute'}
+          </button>
+          <button
+            className="bingo-btn-main"
+            onClick={handleLeaveLobby}
+            style={{ background: '#e53935', minWidth: 80 }}
+          >
+            Leave
+          </button>
+          <button
+            className="bingo-btn-main"
+            style={{ background: '#43a047', minWidth: 80 }}
+            onClick={() => {
+              setBingoError('');
+              if (!bingoCard || !calledNumbers) return;
+              const winCells = getBingoWinCells(bingoCard, calledNumbers);
+              if (winCells) {
+                setWinningCells(winCells);
+                setGameWinner(user.telegramId);
+              } else {
+                setBingoError('No Bingo yet! Keep playing.');
+              }
+            }}
+          >
+            Bingo!
+          </button>
+        </div>
+        {bingoError && (
+          <div style={{ color: '#e53935', fontWeight: 700, marginTop: 8 }}>{bingoError}</div>
         )}
       </div>
     );
