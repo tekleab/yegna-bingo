@@ -8,7 +8,7 @@ import Lobby from './components/Lobby';
 import CardSelection from './components/CardSelection';
 import axios from 'axios';
 
-const BACKEND_URL = 'https://yegna-bingo-backend.onrender.com';
+const BACKEND_URL = 'https://yegna-bingo.onrender.com';
 
 function RegistrationModal({ onRegister }) {
   const [telegramId, setTelegramId] = useState('');

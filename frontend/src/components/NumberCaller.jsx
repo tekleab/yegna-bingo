@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const BACKEND_URL = 'https://yegna-bingo-backend.onrender.com';
+const BACKEND_URL = 'https://yegna-bingo.onrender.com';
 
 export default function NumberCaller({ bet, onGameUpdate }) {
   const [gameStatus, setGameStatus] = useState(null);
