@@ -128,6 +128,14 @@ bot.hears(/^\d+$/, async (ctx) => {
     const res = await axios.post(`${BACKEND_URL}/lobby/assign_card`, { telegramId, bet, card });
     ctx.reply(`Card ${card} assigned to you!`, Markup.removeKeyboard());
     userSessions[userId].awaitingCard = false;
+
+    // Check if game has started
+    const lobbyStatus = await axios.get(`${BACKEND_URL}/lobby/status/${bet}`);
+    if (lobbyStatus.data.lobby && lobbyStatus.data.lobby.started) {
+      ctx.reply('🎮 The game has started! Open the web app to play.');
+    } else {
+      ctx.reply('Waiting for other players to select their cards... The game will start automatically when all are ready.');
+    }
   } catch (err) {
     if (err.response && err.response.data && err.response.data.error) {
       ctx.reply(`Could not assign card: ${err.response.data.error}`);
