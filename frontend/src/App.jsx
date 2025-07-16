@@ -357,8 +357,11 @@ export default function App() {
     return (
       <div>
         <h1>Yegna Bingo</h1>
-        <div style={{ marginBottom: 16 }}>Wallet: <b>{wallet !== null ? `${wallet} Birr` : '...'}</b></div>
-        {error && <div style={{ color: 'red', marginBottom: 10 }}>{error}</div>}
+        {/* Hide wallet and error for test user */}
+        {user.telegramId !== 'testuser' && (
+          <div style={{ marginBottom: 16 }}>Wallet: <b>{wallet !== null ? `${wallet} Birr` : '...'}</b></div>
+        )}
+        {user.telegramId !== 'testuser' && error && <div style={{ color: 'red', marginBottom: 10 }}>{error}</div>}
         <Lobby playerCounts={playerCounts} onJoin={handleJoinLobby} />
       </div>
     );
