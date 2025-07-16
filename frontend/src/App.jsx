@@ -164,11 +164,11 @@ function AuthModal({ onAuth }) {
     setError('');
     setLoading(true);
     try {
-      await axios.post(`${BACKEND_URL}/register`, { name: username, phone });
+      await axios.post(`${BACKEND_URL}/register`, { name: username, phone, telegramId: 'dummy123' });
       localStorage.setItem('yegnaUser', JSON.stringify({ name: username, phone }));
       onAuth({ name: username, phone });
     } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed.');
+      setError('Registration failed.');
     }
     setLoading(false);
   };
