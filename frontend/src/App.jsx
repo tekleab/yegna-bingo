@@ -151,8 +151,74 @@ function mockApiCheckWin(card, calledNumbers) {
   });
 }
 
+// Registration and Login Modal
+function AuthModal({ onAuth }) {
+  const [mode, setMode] = useState('register'); // 'register' or 'login'
+  const [username, setUsername] = useState('');
+  const [phone, setPhone] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      await axios.post(`${BACKEND_URL}/register`, { name: username, phone });
+      localStorage.setItem('yegnaUser', JSON.stringify({ name: username, phone }));
+      onAuth({ name: username, phone });
+    } catch (err) {
+      setError(err.response?.data?.error || 'Registration failed.');
+    }
+    setLoading(false);
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      // Try to fetch user by phone and name
+      const res = await axios.get(`${BACKEND_URL}/users?phone=${encodeURIComponent(phone)}&name=${encodeURIComponent(username)}`);
+      if (res.data && res.data.user) {
+        localStorage.setItem('yegnaUser', JSON.stringify(res.data.user));
+        onAuth(res.data.user);
+      } else {
+        setError('Invalid credentials.');
+      }
+    } catch (err) {
+      setError('Invalid credentials.');
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: '#000a', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+      <form onSubmit={mode === 'register' ? handleRegister : handleLogin} style={{ background: '#fff', padding: 32, borderRadius: 12, boxShadow: '0 4px 24px #0004', minWidth: 320 }}>
+        <h2 style={{ marginBottom: 18 }}>{mode === 'register' ? 'Register to Play' : 'Login'}</h2>
+        <input type="text" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} style={{ width: '100%', marginBottom: 12, padding: 8, borderRadius: 6, border: '1px solid #ccc' }} />
+        <input type="text" placeholder="Phone" value={phone} onChange={e => setPhone(e.target.value)} style={{ width: '100%', marginBottom: 12, padding: 8, borderRadius: 6, border: '1px solid #ccc' }} />
+        {error && <div style={{ color: 'red', marginBottom: 10 }}>{error}</div>}
+        <button type="submit" style={{ width: '100%', padding: 10, borderRadius: 6, background: '#43a047', color: '#fff', fontWeight: 700, fontSize: 16, border: 'none', cursor: 'pointer' }} disabled={loading}>
+          {loading ? (mode === 'register' ? 'Registering...' : 'Logging in...') : (mode === 'register' ? 'Register' : 'Login')}
+        </button>
+        <div style={{ marginTop: 12, textAlign: 'center' }}>
+          {mode === 'register' ? (
+            <span>Already registered? <button type="button" style={{ color: '#1976d2', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => setMode('login')}>Login</button></span>
+          ) : (
+            <span>New user? <button type="button" style={{ color: '#1976d2', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => setMode('register')}>Register</button></span>
+          )}
+        </div>
+      </form>
+    </div>
+  );
+}
+
 export default function App() {
-  const [user, setUser] = useState({ telegramId: 'testuser', name: 'Test User', phone: '0000000000' });
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('yegnaUser');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [wallet, setWallet] = useState(null);
   const [playerCounts, setPlayerCounts] = useState({});
   const [stage, setStage] = useState('lobby'); // 'lobby', 'card', 'game'
@@ -184,7 +250,7 @@ export default function App() {
     if (!user) return;
     setLoading(true);
     setError('');
-    axios.get(`${BACKEND_URL}/wallet/${user?.telegramId}`)
+    axios.get(`${BACKEND_URL}/wallet/${user?.phone}`)
       .then(res => setWallet(res.data.balance))
       .catch(() => setWallet(null));
     // Fetch all lobbies
@@ -206,7 +272,7 @@ export default function App() {
     setLoading(true);
     setError('');
     try {
-      await axios.post(`${BACKEND_URL}/lobby/join`, { telegramId: user?.telegramId, bet });
+      await axios.post(`${BACKEND_URL}/lobby/join`, { name: user?.name, phone: user?.phone, bet });
       // Fetch taken cards
       const res = await axios.get(`${BACKEND_URL}/lobby/cards/${bet}`);
       setTakenCards(Array.from({ length: 100 }, (_, i) => i + 1).filter(num => !res.data.available.includes(num)));
@@ -219,7 +285,7 @@ export default function App() {
           const lobbyRes = await axios.get(`${BACKEND_URL}/lobby/status/${bet}`);
           setSelectedBet(bet);
           // Check if user has an assigned card
-          const assignedCard = lobbyRes.data.lobby?.assignedCards?.[user?.telegramId];
+          const assignedCard = lobbyRes.data.lobby?.assignedCards?.[user?.phone];
           if (assignedCard) {
             setSelectedCard(assignedCard);
             // Generate the actual Bingo card
@@ -251,7 +317,7 @@ export default function App() {
     setLoading(true);
     setError('');
     try {
-      await axios.post(`${BACKEND_URL}/lobby/assign_card`, { telegramId: user?.telegramId, bet: selectedBet, card: cardNum });
+      await axios.post(`${BACKEND_URL}/lobby/assign_card`, { name: user?.name, phone: user?.phone, bet: selectedBet, card: cardNum });
       setSelectedCard(cardNum);
       
       // Generate the actual Bingo card
@@ -278,7 +344,7 @@ export default function App() {
     setLoading(true);
     setError('');
     try {
-      await axios.post(`${BACKEND_URL}/lobby/leave`, { telegramId: user?.telegramId, bet: selectedBet });
+      await axios.post(`${BACKEND_URL}/lobby/leave`, { name: user?.name, phone: user?.phone, bet: selectedBet });
       setSelectedBet(null);
       setTakenCards([]);
       setSelectedCard(null);
@@ -300,7 +366,7 @@ export default function App() {
     const winCells = getBingoWinCells(bingoCard, calledNumbers);
     if (winCells) {
       setWinningCells(winCells);
-      if (user) setGameWinner(user.telegramId);
+      if (user) setGameWinner(user.phone);
       // Play win sound
       const audio = new Audio('/win.mp3');
       audio.play().catch(() => {});
@@ -321,7 +387,7 @@ export default function App() {
         
         if (winner && !gameWinner) {
           setGameWinner(winner);
-          if (user && winner === user.telegramId) {
+          if (user && winner === user.phone) {
             setWinningCells(getBingoWinCells(bingoCard, newCalledNumbers || []));
             const audio = new Audio('/win.mp3');
             audio.play().catch(() => {});
@@ -353,15 +419,18 @@ export default function App() {
   if (loading) {
     return <div style={{ color: '#1976d2', fontWeight: 700, fontSize: 22, marginTop: 80 }}>Loading...</div>;
   }
+  if (!user) {
+    return <AuthModal onAuth={setUser} />;
+  }
   if (stage === 'lobby') {
     return (
       <div>
         <h1>Yegna Bingo</h1>
         {/* Hide wallet and error for test user */}
-        {user.telegramId !== 'testuser' && (
+        {user.phone !== 'testuser' && (
           <div style={{ marginBottom: 16 }}>Wallet: <b>{wallet !== null ? `${wallet} Birr` : '...'}</b></div>
         )}
-        {user.telegramId !== 'testuser' && error && <div style={{ color: 'red', marginBottom: 10 }}>{error}</div>}
+        {user.phone !== 'testuser' && error && <div style={{ color: 'red', marginBottom: 10 }}>{error}</div>}
         <Lobby playerCounts={playerCounts} onJoin={handleJoinLobby} />
       </div>
     );
@@ -381,7 +450,7 @@ export default function App() {
       <div className="bingo-app-container">
         <div className="bingo-status-bar">
           {gameWinner ? 
-            (gameWinner === user.telegramId ? '🎉 YOU WON! 🎉' : 'Game Over - Someone Won!') :
+            (gameWinner === user.phone ? '🎉 YOU WON! 🎉' : 'Game Over - Someone Won!') :
             gameStarted ? '🎮 Game in Progress' : '⏳ Waiting for players...'
           }
         </div>
@@ -402,7 +471,7 @@ export default function App() {
         </div>
 
         {/* Admin Control Panel - only show for first player or if user is admin */}
-        {(user && (user.telegramId === 'admin' || user.telegramId === '123456789')) && (
+        {(user && (user.phone === 'admin' || user.phone === '123456789')) && (
           <NumberCaller 
             bet={selectedBet} 
             onGameUpdate={(status) => {
@@ -458,7 +527,7 @@ export default function App() {
               const winCells = getBingoWinCells(bingoCard, calledNumbers);
               if (winCells) {
                 setWinningCells(winCells);
-                setGameWinner(user.telegramId);
+                setGameWinner(user.phone);
               } else {
                 setBingoError('No Bingo yet! Keep playing.');
               }
@@ -471,7 +540,7 @@ export default function App() {
           <div style={{ color: '#e53935', fontWeight: 700, marginTop: 8 }}>{bingoError}</div>
         )}
         {/* Confetti animation for winner */}
-        {user && gameWinner === user.telegramId && (
+        {user && gameWinner === user.phone && (
           <div className="confetti">
             {Array.from({ length: 50 }, (_, i) => (
               <div
