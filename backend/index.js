@@ -104,13 +104,20 @@ app.post('/register', async (req, res) => {
     return res.status(400).json({ error: 'Missing required fields' });
   }
   try {
+    // Remove unique user check: always create or update user
     let user = await User.findOne({ telegramId });
     if (user) {
-      return res.status(400).json({ error: 'User already registered' });
+      user.name = name;
+      user.phone = phone;
+      // Optionally reset balance or keep existing
+      // user.balance = 10;
+      await user.save();
+      return res.json({ message: 'User updated', user });
+    } else {
+      user = new User({ telegramId, name, phone });
+      await user.save();
+      return res.json({ message: 'User registered', user });
     }
-    user = new User({ telegramId, name, phone });
-    await user.save();
-    res.json({ message: 'User registered', user });
   } catch (err) {
     res.status(500).json({ error: 'Registration failed' });
   }
