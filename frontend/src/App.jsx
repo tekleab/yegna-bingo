@@ -10,40 +10,6 @@ import axios from 'axios';
 
 const BACKEND_URL = 'https://yegna-bingo.onrender.com';
 
-function RegistrationModal({ onRegister }) {
-  const [telegramId, setTelegramId] = useState('');
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [error, setError] = useState('');
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!telegramId || !name || !phone) {
-      setError('All fields are required.');
-      return;
-    }
-    try {
-      await axios.post(`${BACKEND_URL}/register`, { telegramId, name, phone });
-      onRegister({ telegramId, name, phone });
-    } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed.');
-    }
-  };
-
-  return (
-    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: '#000a', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
-      <form onSubmit={handleSubmit} style={{ background: '#fff', padding: 32, borderRadius: 12, boxShadow: '0 4px 24px #0004', minWidth: 320 }}>
-        <h2 style={{ marginBottom: 18 }}>Register to Play</h2>
-        <input type="text" placeholder="Telegram ID" value={telegramId} onChange={e => setTelegramId(e.target.value)} style={{ width: '100%', marginBottom: 12, padding: 8, borderRadius: 6, border: '1px solid #ccc' }} />
-        <input type="text" placeholder="Name" value={name} onChange={e => setName(e.target.value)} style={{ width: '100%', marginBottom: 12, padding: 8, borderRadius: 6, border: '1px solid #ccc' }} />
-        <input type="text" placeholder="Phone" value={phone} onChange={e => setPhone(e.target.value)} style={{ width: '100%', marginBottom: 12, padding: 8, borderRadius: 6, border: '1px solid #ccc' }} />
-        {error && <div style={{ color: 'red', marginBottom: 10 }}>{error}</div>}
-        <button type="submit" style={{ width: '100%', padding: 10, borderRadius: 6, background: '#43a047', color: '#fff', fontWeight: 700, fontSize: 16, border: 'none', cursor: 'pointer' }}>Register</button>
-      </form>
-    </div>
-  );
-}
-
 // Helper to generate a bingo card
 function generateBingoCard() {
   const card = []
@@ -186,10 +152,7 @@ function mockApiCheckWin(card, calledNumbers) {
 }
 
 export default function App() {
-  const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('yegnaUser');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [user, setUser] = useState({ telegramId: 'testuser', name: 'Test User', phone: '0000000000' });
   const [wallet, setWallet] = useState(null);
   const [playerCounts, setPlayerCounts] = useState({});
   const [stage, setStage] = useState('lobby'); // 'lobby', 'card', 'game'
@@ -387,9 +350,6 @@ export default function App() {
   }, [stage, selectedBet, bingoCard, marked, gameWinner, user]);
 
   // UI rendering
-  if (!user) {
-    return <RegistrationModal onRegister={handleRegister} />;
-  }
   if (loading) {
     return <div style={{ color: '#1976d2', fontWeight: 700, fontSize: 22, marginTop: 80 }}>Loading...</div>;
   }
