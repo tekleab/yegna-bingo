@@ -164,9 +164,10 @@ function AuthModal({ onAuth }) {
     setError('');
     setLoading(true);
     try {
-      await axios.post(`${BACKEND_URL}/register`, { name: username, phone, telegramId: 'dummy123' });
-      localStorage.setItem('yegnaUser', JSON.stringify({ name: username, phone }));
-      onAuth({ name: username, phone });
+      // Hardcode registration for demo
+      await axios.post(`${BACKEND_URL}/register`, { name: 'tekleab', phone: '0939085453', telegramId: 'tekleab_0939085453' });
+      localStorage.setItem('yegnaUser', JSON.stringify({ name: 'tekleab', phone: '0939085453' }));
+      onAuth({ name: 'tekleab', phone: '0939085453' });
     } catch (err) {
       setError('Registration failed.');
     }
