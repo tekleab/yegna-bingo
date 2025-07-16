@@ -488,7 +488,7 @@ export default function App() {
           </button>
           <button
             className="bingo-btn-main"
-            style={{ background: '#43a047' }}
+            style={{ background: '#43a047', minWidth: 80 }}
             onClick={() => {
               setBingoError('');
               if (!bingoCard || !calledNumbers) return;
@@ -501,7 +501,7 @@ export default function App() {
               }
             }}
           >
-            Bingo!
+            Test Bingo!
           </button>
         </div>
         {bingoError && (
