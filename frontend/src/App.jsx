@@ -151,75 +151,10 @@ function mockApiCheckWin(card, calledNumbers) {
   });
 }
 
-// Registration and Login Modal
-function AuthModal({ onAuth }) {
-  const [mode, setMode] = useState('register'); // 'register' or 'login'
-  const [username, setUsername] = useState('');
-  const [phone, setPhone] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-    try {
-      // Hardcode registration for demo
-      await axios.post(`${BACKEND_URL}/register`, { name: 'tekleab', phone: '0939085453', telegramId: 'tekleab_0939085453' });
-      localStorage.setItem('yegnaUser', JSON.stringify({ name: 'tekleab', phone: '0939085453' }));
-      onAuth({ name: 'tekleab', phone: '0939085453' });
-    } catch (err) {
-      setError('Registration failed.');
-    }
-    setLoading(false);
-  };
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-    try {
-      // Try to fetch user by phone and name
-      const res = await axios.get(`${BACKEND_URL}/users?phone=${encodeURIComponent(phone)}&name=${encodeURIComponent(username)}`);
-      if (res.data && res.data.user) {
-        localStorage.setItem('yegnaUser', JSON.stringify(res.data.user));
-        onAuth(res.data.user);
-      } else {
-        setError('Invalid credentials.');
-      }
-    } catch (err) {
-      setError('Invalid credentials.');
-    }
-    setLoading(false);
-  };
-
-  return (
-    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: '#000a', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
-      <form onSubmit={mode === 'register' ? handleRegister : handleLogin} style={{ background: '#fff', padding: 32, borderRadius: 12, boxShadow: '0 4px 24px #0004', minWidth: 320 }}>
-        <h2 style={{ marginBottom: 18 }}>{mode === 'register' ? 'Register to Play' : 'Login'}</h2>
-        <input type="text" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} style={{ width: '100%', marginBottom: 12, padding: 8, borderRadius: 6, border: '1px solid #ccc' }} />
-        <input type="text" placeholder="Phone" value={phone} onChange={e => setPhone(e.target.value)} style={{ width: '100%', marginBottom: 12, padding: 8, borderRadius: 6, border: '1px solid #ccc' }} />
-        {error && <div style={{ color: 'red', marginBottom: 10 }}>{error}</div>}
-        <button type="submit" style={{ width: '100%', padding: 10, borderRadius: 6, background: '#43a047', color: '#fff', fontWeight: 700, fontSize: 16, border: 'none', cursor: 'pointer' }} disabled={loading}>
-          {loading ? (mode === 'register' ? 'Registering...' : 'Logging in...') : (mode === 'register' ? 'Register' : 'Login')}
-        </button>
-        <div style={{ marginTop: 12, textAlign: 'center' }}>
-          {mode === 'register' ? (
-            <span>Already registered? <button type="button" style={{ color: '#1976d2', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => setMode('login')}>Login</button></span>
-          ) : (
-            <span>New user? <button type="button" style={{ color: '#1976d2', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => setMode('register')}>Register</button></span>
-          )}
-        </div>
-      </form>
-    </div>
-  );
-}
-
+// REMOVE all registration and login logic
+// Always use a default test user
 export default function App() {
-  const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('yegnaUser');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [user] = useState({ name: 'Test User', phone: '0000000000', telegramId: 'testuser' });
   const [wallet, setWallet] = useState(null);
   const [playerCounts, setPlayerCounts] = useState({});
   const [stage, setStage] = useState('lobby'); // 'lobby', 'card', 'game'
@@ -420,9 +355,8 @@ export default function App() {
   if (loading) {
     return <div style={{ color: '#1976d2', fontWeight: 700, fontSize: 22, marginTop: 80 }}>Loading...</div>;
   }
-  if (!user) {
-    return <AuthModal onAuth={setUser} />;
-  }
+  // REMOVE any modal or auth checks
+  // Show the game UI immediately
   if (stage === 'lobby') {
     return (
       <div>
